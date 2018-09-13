@@ -24,6 +24,8 @@
 #include <stdint.h>
 
 
+#pragma GCC visibility push(default)
+
 enum CrabFileFlag
 {
     /*
@@ -67,7 +69,7 @@ enum CrabSectionFlag
     CRAB_SECTION_FLAG_BORROW = 0x02,
 };
 
-enum CrabCloseFlag
+enum CrabSaveFlag
 {
     /*
         After saving, reopen to save memory.
@@ -75,7 +77,7 @@ enum CrabCloseFlag
         This will preserve the `CrabFile` and `CrabSection` pointers, but
         invalidate the data and schema pointers.
     */
-    CRAB_CLOSE_FLAG_REOPEN = 0x01,
+    CRAB_SAVE_FLAG_REOPEN = 0x01,
 };
 
 
@@ -155,10 +157,12 @@ size_t crab_section_data_size(CrabSection *s);
 */
 CrabAbstractData *crab_section_data(CrabSection *s);
 /*
-    Copy the schema, purpose, and data from another section.
-*/
-bool crab_section_copy(CrabSection *s, int flags, CrabSection *other);
-/*
     Copy the data into the section.
 */
 bool crab_section_set_data(CrabSection *s, int flags, CrabAbstractData *data, size_t size);
+/*
+    Copy the schema, purpose, and data from another section.
+*/
+bool crab_section_copy(CrabSection *s, int flags, CrabSection *other);
+
+#pragma GCC visibility pop

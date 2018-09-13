@@ -18,6 +18,8 @@
 #pragma once
 
 
+#pragma GCC visibility push(default)
+
 #define unlikely(expr) __builtin_expect(!!(expr), 0)
 #define likely(expr) __builtin_expect(!!(expr), 1)
 
@@ -42,3 +44,5 @@ void die2(const char *what, int e);
 })
 
 #define ERROR(f) die(f)
+
+#pragma GCC visibility pop

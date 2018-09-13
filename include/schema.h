@@ -61,7 +61,7 @@ struct __attribute__((scalar_storage_order("big-endian"))) CrabSchemaData
     uint32_t string_section;
     uint16_t reserved;
     uint16_t num_schemas;
-    struct
+    struct __attribute__((scalar_storage_order("big-endian")))
     {
         uint32_t url;
         uint32_t reserved;
@@ -81,7 +81,7 @@ struct __attribute__((scalar_storage_order("big-endian"))) CrabPurposeData
     uint32_t num_supplements;
     uint16_t reserved;
     uint16_t num_purposes;
-    struct
+    struct __attribute__((scalar_storage_order("big-endian")))
     {
         uint32_t purpose;
         uint32_t reserved;

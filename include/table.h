@@ -23,6 +23,8 @@
 #include <stdio.h>
 
 
+#pragma GCC visibility push(default)
+
 /*
     WARNING: this API is unstable
 
@@ -78,3 +80,5 @@ void crab_table_emitc(Table *t, char c);
 void crab_table_emits(Table *t, const char *s);
 void crab_table_emitu(Table *t, uintmax_t i);
 void crab_table_emiti(Table *t, intmax_t i);
+
+#pragma GCC visibility pop

@@ -208,6 +208,10 @@ static void crab_file_open_partial(CrabFile *c, bool all)
         {
             if (c->num_sections != num_sections)
                 die2("<num_sections mismatch>", EINVAL);
+            for (i = 0; i < num_sections; ++i)
+            {
+                c->sections[i]->flags &= ~CRAB_SECTION_FLAG_OWN;
+            }
         }
         for (i = 0; i < num_sections; ++i)
         {
@@ -229,9 +233,10 @@ static void crab_file_open_partial(CrabFile *c, bool all)
             s->section_number = i;
             s->local_schema_id = header->section_info[i].schema;
             s->purpose = header->section_info[i].purpose;
-            /* s->schema = ...; */
+            /* s->schema = ...; set in update_schemas */
             s->data = (CrabAbstractData *)((char *)header + header->section_info[i].offset);
             s->data_size = header->section_info[i].size;
+            /* s->flags = 0; inherited */
         }
         if (0 + ((CrabSchemaData *)c->sections[0]->data)->string_section >= num_sections)
             goto fmt_err;
@@ -290,8 +295,10 @@ static bool crab_file_close_partial(CrabFile *c, bool all)
             if (s->flags & CRAB_SECTION_FLAG_OWN)
                 free(s->data);
             if (all)
+            {
                 free(s);
-            c->sections[i] = NULL;
+                c->sections[i] = NULL;
+            }
         }
     }
     if (c->file_header)
@@ -395,7 +402,7 @@ bool crab_file_save(CrabFile *c, int flags)
         TRY(rename, (filename_tmp, c->filename));
     }
 
-    if (flags & CRAB_CLOSE_FLAG_REOPEN)
+    if (flags & CRAB_SAVE_FLAG_REOPEN)
     {
         crab_file_close_partial(c, false);
         crab_file_open_partial(c, false);
@@ -571,6 +578,36 @@ CrabAbstractData *crab_section_data(CrabSection *s)
     return s->data;
 }
 
+bool crab_section_set_data(CrabSection *s, int flags, CrabAbstractData *data, size_t size)
+{
+    CrabFile *c = s->c;
+    if (!size)
+        data = NULL;
+    if (!data)
+        flags = CRAB_SECTION_FLAG_BORROW;
+    /* These are handled the same here; different when the data is freed. */
+    if (flags & (CRAB_SECTION_FLAG_OWN | CRAB_SECTION_FLAG_BORROW))
+    {
+        if (s->flags & CRAB_SECTION_FLAG_OWN)
+            free(s->data);
+        s->data = data;
+    }
+    else
+    {
+        CrabAbstractData *new_data = TRY_P(memdup, (data, size));
+        flags |= CRAB_SECTION_FLAG_OWN;
+        if (s->flags & CRAB_SECTION_FLAG_OWN)
+            free(s->data);
+        s->data = new_data;
+    }
+    s->data_size = size;
+    s->flags = flags;
+    return true;
+err:
+    maybe_perror(c);
+    return false;
+}
+
 bool crab_section_copy(CrabSection *s, int flags, CrabSection *other)
 {
     CrabFile *c = s->c;
@@ -610,36 +647,6 @@ bool crab_section_copy(CrabSection *s, int flags, CrabSection *other)
     s->schema = new_schema;
     s->local_schema_id = new_schema_id;
     s->purpose = new_purpose;
-    return true;
-err:
-    maybe_perror(c);
-    return false;
-}
-
-bool crab_section_set_data(CrabSection *s, int flags, CrabAbstractData *data, size_t size)
-{
-    CrabFile *c = s->c;
-    if (!size)
-        data = NULL;
-    if (!data)
-        flags = CRAB_SECTION_FLAG_BORROW;
-    /* These are handled the same here; different when the data is freed. */
-    if (flags & (CRAB_SECTION_FLAG_OWN | CRAB_SECTION_FLAG_BORROW))
-    {
-        if (s->flags & CRAB_SECTION_FLAG_OWN)
-            free(s->data);
-        s->data = data;
-    }
-    else
-    {
-        CrabAbstractData *new_data = TRY_P(memdup, (data, size));
-        flags |= CRAB_SECTION_FLAG_OWN;
-        if (s->flags & CRAB_SECTION_FLAG_OWN)
-            free(s->data);
-        s->data = new_data;
-    }
-    s->data_size = size;
-    s->flags = flags;
     return true;
 err:
     maybe_perror(c);

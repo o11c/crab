@@ -1,3 +1,10 @@
 /obj/
 /lib/
 /bin/
+
+/crab/_crab.c
+/crab/_crab.*.so
+/crab/_crab.o
+
+/.pytest_cache/
+__pycache__/
