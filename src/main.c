@@ -198,7 +198,7 @@ static int cmd_repurpose(int argc, char **argv)
     uint16_t purpose;
     if (argc != 4)
     {
-        puts("Usage: crab add <filename.crab> <section-number> <schema> <purpose>");
+        puts("Usage: crab repurpose <filename.crab> <section-number> <schema> <purpose>");
         return 1;
     }
     c = crab_file_open(argv[0], CRAB_FILE_FLAG_PERROR);
@@ -354,7 +354,7 @@ struct
     const char *help;
 } commands[] =
 {
-    {"help", cmd_help, "Get help."},
+    {"--help", cmd_help, "Get help."},
     {"new", cmd_new, "Create a new, empty, CRAB file."},
     {"list", cmd_list, "List sections of a CRAB file."},
     {"add", cmd_add, "Add a section to a CRAB file."},
@@ -398,8 +398,8 @@ int main(int argc, char **argv)
     if (argc >= 2)
     {
         size_t i;
-        if (strcmp(argv[1], "--help") == 0 || strcmp(argv[1], "-h") == 0)
-            argv[1] = (char *)"help";
+        if (strcmp(argv[1], "-h") == 0)
+            argv[1] = (char *)"--help";
         for (i = 0; i < NUM_COMMANDS; ++i)
         {
             if (strcmp(argv[1], commands[i].name) == 0)

@@ -1,4 +1,4 @@
-from crab.crab import CrabFile, CrabSection, CrabPurpose, CRAB_SCHEMA
+from crab.crab import CrabFile, CrabPurpose, CRAB_SCHEMA
 
 import gc
 import unittest

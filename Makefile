@@ -73,13 +73,17 @@ bin/python3:
 	echo '#!/bin/sh' > bin/python3
 	echo 'ASAN_OPTIONS=$${ASAN_OPTIONS}:detect_leaks=0 ${PYTHON3} "$$@"' >> bin/python3
 	chmod +x bin/python3
+py3 = LD_PRELOAD=${LD_PRELOAD_FOR_DLOPEN} python3
 shell: bin/python3
 	LD_PRELOAD=${LD_PRELOAD_FOR_DLOPEN} bash
 python: bin/python3
-	LD_PRELOAD=${LD_PRELOAD_FOR_DLOPEN} python3
+	${py3}
+# Both test-commands and test-python-commands create/write the same files
+# and python-unittest checks them.
+.NOTPARALLEL:
 test: test-commands
 test-commands: bin/crab
-	crab help
+	crab --help
 	crab new test-data/empty.crab
 	crab list test-data/empty.crab
 	cp test-data/empty.crab test-data/hello.crab
@@ -95,7 +99,23 @@ test-commands: bin/crab
 	crab list test-data/hello.crab
 	crab dump test-data/hello.crab 2 /dev/stdout
 	crab dump test-data/hello.crab 4 test-data/random.bin
-
+test-python-commands: bin/python3 build-python-extension lib/libcrab.so
+	${py3} -m crab --help
+	${py3} -m crab new test-data/empty.crab
+	${py3} -m crab list test-data/empty.crab
+	cp test-data/empty.crab test-data/hello.crab
+	${py3} -m crab add test-data/hello.crab test-data/hello.txt
+	${py3} -m crab list test-data/hello.crab
+	${py3} -m crab add test-data/hello.crab test-data/hello.txt --schema=bogus:whatever --purpose=5 ''
+	${py3} -m crab list test-data/hello.crab
+	${py3} -m crab repurpose test-data/hello.crab 3 bogus:something-else 6
+	${py3} -m crab list test-data/hello.crab
+	${py3} -m crab store test-data/hello.crab 4 test-data/random.bin
+	${py3} -m crab list test-data/hello.crab
+	${py3} -m crab wipe test-data/hello.crab 3
+	${py3} -m crab list test-data/hello.crab
+	${py3} -m crab dump test-data/hello.crab 2 /dev/stdout
+	${py3} -m crab dump test-data/hello.crab 4 test-data/random.bin
 build-python-extension:
 	${PYTHON3} -m crab.crab_build
 clean: clean-python
@@ -103,9 +123,19 @@ clean-python:
 	rm -f crab/_crab.[co] crab/_crab.*.so
 test: python-unittest
 python-unittest: bin/python3 build-python-extension lib/libcrab.so
-	LD_PRELOAD=${LD_PRELOAD_FOR_DLOPEN} python3 -m unittest discover
-# not called by default
+	${py3} -m unittest discover
+
+# not called by default; don't care about parallel problems.
 python-pytest: bin/python3 build-python-extension lib/libcrab.so
-	LD_PRELOAD=${LD_PRELOAD_FOR_DLOPEN} python3 -m pytest
+	${py3} -m pytest
+python-help:
+	${py3} -m crab --help
+	${py3} -m crab new --help
+	${py3} -m crab list --help
+	${py3} -m crab add --help
+	${py3} -m crab repurpose --help
+	${py3} -m crab store --help
+	${py3} -m crab wipe --help
+	${py3} -m crab dump --help
 
 -include obj/*.d

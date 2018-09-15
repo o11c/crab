@@ -65,6 +65,11 @@ class CrabFile:
             assert rv, 'errors in `close` should abort() before this!'
         self._raw = None
 
+    def __enter__(self):
+        return self
+    def __exit__(self, ty, v, tb):
+        self.close()
+
     def raise_error(self, *, always=True):
         ''' Utility function to turn message+errno pairs into exceptions.
 
